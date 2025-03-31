@@ -1,14 +1,12 @@
 import json
 import datetime
-
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
 from django.core.mail import EmailMessage
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
-from sklearn import svm
-
+import requests
 
 from cart.models import CartItem, Cart
 from cart.views import _cart_id
@@ -17,7 +15,7 @@ from .forms import OrderForm
 from .models import Order, Payment, OrderProduct
 from shop.models import Product
 
-
+ESP_IP = "http://"+"192.168.29.58"
 @login_required(login_url = 'accounts:login')
 def payment_method(request):
     return render(request, 'shop/orders/payment_method.html',)
@@ -46,13 +44,6 @@ def checkout(request,total=0, total_price=0, quantity=0, cart_items=None):
     grand_total = total_price + tax
     handing = 15.00
     total = float(grand_total) + handing
-    X = [[3], [4],[2],[6],[1],[0],[4]]
-    y = [1,0,1,0,1,1,0]
-    clf = svm.SVC()
-    clf.fit(X, y)
-    clf.predict([[len(Order.objects.filter(user=request.user,return_order=True))]])
-    if len(Order.objects.filter(user=request.user,return_order=True)) >= 3:
-        return render(request, 'shop/orders/order_completed/order_banned.html')
         
     context = {
         'total_price': total_price,
@@ -125,6 +116,11 @@ def payment(request, total=0, quantity=0):
                 'vat': tax,
                 'order_total': total,
             }
+            try:
+                requests.get(f"{ESP_IP}/gpio/1")
+                print("Payment Action")
+            except:
+                pass
             return render(request, 'shop/orders/checkout/payment.html', context)
         else:
             messages.error(request, 'YOur information not Vailed')
@@ -262,6 +258,11 @@ def order_completed1(request,order):
             #'payment': payment,
             'subtotal': subtotal,
         }
+        try:
+            requests.get(f"{ESP_IP}/gpio/0")
+            print("completed.....")
+        except:
+            pass
         return render(request, 'shop/orders/order_completed/order_completed.html', context)
     except Exception as e:
         print(e)
